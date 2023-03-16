@@ -9,7 +9,11 @@ class BlogsController < ApplicationController
     @blogs = Blog.search(params[:term]).published.default_order
   end
 
-  def show; end
+  def show;
+    if @blog.secret = true && current_user != @blog.user
+      redirect_to("/")
+    end
+  end
 
   def new
     @blog = Blog.new
