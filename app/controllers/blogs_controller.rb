@@ -10,7 +10,7 @@ class BlogsController < ApplicationController
   end
 
   def show;
-    if @blog.secret = true && current_user != @blog.user
+    if @blog.secret && current_user.id != @blog.user_id
       redirect_to("/")
     end
   end
