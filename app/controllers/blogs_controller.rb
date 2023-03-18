@@ -25,7 +25,7 @@ class BlogsController < ApplicationController
 
   def edit;
     if @blog.user_id != current_user.id
-      redirect_to("/")
+      raise ActiveRecord::RecordNotFound
     end
   end
 
