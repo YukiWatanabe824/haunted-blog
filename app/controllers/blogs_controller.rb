@@ -40,6 +40,9 @@ class BlogsController < ApplicationController
   end
 
   def update
+    if @blog.user_id != current_user.id
+      raise ActiveRecord::RecordNotFound
+    end
     if @blog.update(blog_params)
       redirect_to blog_url(@blog), notice: 'Blog was successfully updated.'
     else
@@ -48,6 +51,9 @@ class BlogsController < ApplicationController
   end
 
   def destroy
+    if @blog.user_id != current_user.id
+      raise ActiveRecord::RecordNotFound
+    end
     @blog.destroy!
 
     redirect_to blogs_url, notice: 'Blog was successfully destroyed.', status: :see_other
