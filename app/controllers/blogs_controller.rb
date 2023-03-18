@@ -10,10 +10,14 @@ class BlogsController < ApplicationController
   end
 
   def show;
-    if @blog.secret && current_user.id != @blog.user_id
-      redirect_to("/")
+    if @blog.secret
+      if !user_signed_in? || @blog.user_id != current_user.id
+        raise ActiveRecord::RecordNotFound
+      end
     end
   end
+
+
 
   def new
     @blog = Blog.new
