@@ -9,27 +9,24 @@ class BlogsController < ApplicationController
     @blogs = Blog.search(params[:term]).published.default_order
   end
 
-  def show;
-    if @blog.secret
-      if !user_signed_in? || @blog.user_id != current_user.id
-        raise ActiveRecord::RecordNotFound
-      end
-    end
+  def show
+    return unless @blog.secret
+
+    raise ActiveRecord::RecordNotFound if !user_signed_in? || @blog.user_id != current_user.id
   end
 
   def new
     @blog = Blog.new
   end
 
-  def edit;
-    if @blog.user_id != current_user.id
-      raise ActiveRecord::RecordNotFound
-    end
+  def edit
+    raise ActiveRecord::RecordNotFound if @blog.user_id != current_user.id
   end
 
   def create
     @blog = current_user.blogs.new(blog_params)
-    redirect_to("/") and return if !current_user.premium && blog_params[:random_eyecatch]
+    redirect_to('/') and return if !current_user.premium && blog_params[:random_eyecatch]
+
     if @blog.save
       redirect_to blog_url(@blog), notice: 'Blog was successfully created.'
     else
@@ -38,10 +35,10 @@ class BlogsController < ApplicationController
   end
 
   def update
-    if @blog.user_id != current_user.id
-      raise ActiveRecord::RecordNotFound
-    end
-    redirect_to("/") and return if !current_user.premium && blog_params[:random_eyecatch]
+    raise ActiveRecord::RecordNotFound if @blog.user_id != current_user.id
+
+    redirect_to('/') and return if !current_user.premium && blog_params[:random_eyecatch]
+
     if @blog.update(blog_params)
       redirect_to blog_url(@blog), notice: 'Blog was successfully updated.'
     else
@@ -50,9 +47,8 @@ class BlogsController < ApplicationController
   end
 
   def destroy
-    if @blog.user_id != current_user.id
-      raise ActiveRecord::RecordNotFound
-    end
+    raise ActiveRecord::RecordNotFound if @blog.user_id != current_user.id
+
     @blog.destroy!
 
     redirect_to blogs_url, notice: 'Blog was successfully destroyed.', status: :see_other
