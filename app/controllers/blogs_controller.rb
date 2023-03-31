@@ -25,7 +25,7 @@ class BlogsController < ApplicationController
 
   def create
     @blog = current_user.blogs.new(blog_params)
-    redirect_to('/') and return if !current_user.premium && blog_params[:random_eyecatch]
+    return if !current_user.premium && blog_params[:random_eyecatch]
 
     if @blog.save
       redirect_to blog_url(@blog), notice: 'Blog was successfully created.'
