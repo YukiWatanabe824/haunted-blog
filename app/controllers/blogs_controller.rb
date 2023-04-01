@@ -10,9 +10,9 @@ class BlogsController < ApplicationController
   end
 
   def show
-    return unless @blog.secret
-
-    raise ActiveRecord::RecordNotFound if !user_signed_in? || @blog.user_id != current_user.id
+    if @blog.secret
+      redirect_if_permission_error if current_user != @blog.user
+    end
   end
 
   def new
@@ -20,12 +20,12 @@ class BlogsController < ApplicationController
   end
 
   def edit
-    raise ActiveRecord::RecordNotFound if @blog.user_id != current_user.id
+    redirect_if_permission_error if @blog.user != current_user
   end
 
   def create
+    blog_params[:random_eyecatch] = false if !current_user.premium
     @blog = current_user.blogs.new(blog_params)
-    return if !current_user.premium && blog_params[:random_eyecatch]
 
     if @blog.save
       redirect_to blog_url(@blog), notice: 'Blog was successfully created.'
@@ -35,9 +35,8 @@ class BlogsController < ApplicationController
   end
 
   def update
-    raise ActiveRecord::RecordNotFound if @blog.user_id != current_user.id
-
-    redirect_to('/') and return if !current_user.premium && blog_params[:random_eyecatch]
+    redirect_if_permission_error if @blog.user != current_user
+    blog_params[:random_eyecatch] = false if !current_user.premium
 
     if @blog.update(blog_params)
       redirect_to blog_url(@blog), notice: 'Blog was successfully updated.'
@@ -47,10 +46,8 @@ class BlogsController < ApplicationController
   end
 
   def destroy
-    raise ActiveRecord::RecordNotFound if @blog.user_id != current_user.id
-
+    redirect_if_permission_error if @blog.user != current_user
     @blog.destroy!
-
     redirect_to blogs_url, notice: 'Blog was successfully destroyed.', status: :see_other
   end
 
@@ -62,5 +59,10 @@ class BlogsController < ApplicationController
 
   def blog_params
     params.require(:blog).permit(:title, :content, :secret, :random_eyecatch)
+  end
+
+  def redirect_if_permission_error
+    flash[:alert] = '権限がありません'
+    redirect_to root_path
   end
 end
