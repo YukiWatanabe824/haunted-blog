@@ -10,9 +10,7 @@ class BlogsController < ApplicationController
   end
 
   def show
-    if @blog.secret
-      redirect_if_permission_error if current_user != @blog.user
-    end
+    redirect_if_permission_error if current_user != @blog.user && @blog.secret
   end
 
   def new
@@ -24,7 +22,7 @@ class BlogsController < ApplicationController
   end
 
   def create
-    blog_params[:random_eyecatch] = false if !current_user.premium
+    blog_params[:random_eyecatch] = false unless current_user.premium
     @blog = current_user.blogs.new(blog_params)
 
     if @blog.save
@@ -36,7 +34,7 @@ class BlogsController < ApplicationController
 
   def update
     redirect_if_permission_error if @blog.user != current_user
-    blog_params[:random_eyecatch] = false if !current_user.premium
+    blog_params[:random_eyecatch] = false unless current_user.premium
 
     if @blog.update(blog_params)
       redirect_to blog_url(@blog), notice: 'Blog was successfully updated.'
