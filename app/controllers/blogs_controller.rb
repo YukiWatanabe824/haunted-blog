@@ -3,26 +3,28 @@
 class BlogsController < ApplicationController
   skip_before_action :authenticate_user!, only: %i[index show]
 
-  before_action :set_blog, only: %i[show edit update destroy]
+  before_action :set_blog, only: %i[edit update destroy]
 
   def index
     @blogs = Blog.search(params[:term]).published.default_order
   end
 
   def show
-    redirect_if_permission_error if current_user != @blog.user && @blog.secret
+    @blog =
+      if user_signed_in?
+        Blog.where(secret: false).or(Blog.where(user_id: current_user.id, secret: true)).find(params[:id])
+      else
+        Blog.where(secret: false).find(params[:id])
+      end
   end
 
   def new
     @blog = Blog.new
   end
 
-  def edit
-    redirect_if_permission_error if @blog.user != current_user
-  end
+  def edit; end
 
   def create
-    blog_params[:random_eyecatch] = false unless current_user.premium
     @blog = current_user.blogs.new(blog_params)
 
     if @blog.save
@@ -33,9 +35,6 @@ class BlogsController < ApplicationController
   end
 
   def update
-    redirect_if_permission_error if @blog.user != current_user
-    blog_params[:random_eyecatch] = false unless current_user.premium
-
     if @blog.update(blog_params)
       redirect_to blog_url(@blog), notice: 'Blog was successfully updated.'
     else
@@ -44,7 +43,6 @@ class BlogsController < ApplicationController
   end
 
   def destroy
-    redirect_if_permission_error if @blog.user != current_user
     @blog.destroy!
     redirect_to blogs_url, notice: 'Blog was successfully destroyed.', status: :see_other
   end
@@ -52,15 +50,14 @@ class BlogsController < ApplicationController
   private
 
   def set_blog
-    @blog = Blog.find(params[:id])
+    @blog = current_user.blogs.find(params[:id])
   end
 
   def blog_params
-    params.require(:blog).permit(:title, :content, :secret, :random_eyecatch)
-  end
-
-  def redirect_if_permission_error
-    flash[:alert] = '権限がありません'
-    redirect_to root_path
+    if current_user.premium
+      params.require(:blog).permit(:title, :content, :secret, :random_eyecatch)
+    else
+      params.require(:blog).permit(:title, :content, :secret)
+    end
   end
 end
